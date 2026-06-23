@@ -110,14 +110,21 @@ auto PikaGripperHardware::on_init(const hardware_interface::HardwareInfo& info) 
   if (publish_debug_commands_) {
     command_debug_publisher_ = debug_node()->create_publisher<std_msgs::msg::UInt8MultiArray>(
         make_debug_topic_name(debug_topic_prefix_, "gripper_command_debug"), rclcpp::SystemDefaultsQoS{});
+    stamped_command_debug_publisher_ = debug_node()->create_publisher<std_msgs_stamped::msg::StampedUInt8MultiArray>(
+        make_debug_topic_name(debug_topic_prefix_, "gripper_command_debug_stamped"), rclcpp::SystemDefaultsQoS{});
   }
   if (publish_sent_position_) {
     sent_position_publisher_ = debug_node()->create_publisher<std_msgs::msg::Float64>(
         make_debug_topic_name(debug_topic_prefix_, "gripper_sent_position_debug"), rclcpp::SystemDefaultsQoS{});
+    stamped_sent_position_publisher_ = debug_node()->create_publisher<std_msgs_stamped::msg::StampedFloat64>(
+        make_debug_topic_name(debug_topic_prefix_, "gripper_sent_position_debug_stamped"), rclcpp::SystemDefaultsQoS{});
   }
   if (publish_feedback_position_) {
     feedback_position_publisher_ = debug_node()->create_publisher<std_msgs::msg::UInt8MultiArray>(
         make_debug_topic_name(debug_topic_prefix_, "gripper_feedback_debug"), rclcpp::SystemDefaultsQoS{});
+    stamped_feedback_position_publisher_ =
+        debug_node()->create_publisher<std_msgs_stamped::msg::StampedUInt8MultiArray>(
+            make_debug_topic_name(debug_topic_prefix_, "gripper_feedback_debug_stamped"), rclcpp::SystemDefaultsQoS{});
   }
 
   clock_ = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
@@ -407,10 +414,20 @@ void PikaGripperHardware::publish_command_debug_frame(const can_frame& frame)
   if (!publish_debug_commands_) {
     return;
   }
+  const auto payload = frame_to_debug_payload(frame);
+  const auto stamp = clock_->now();
   if (command_debug_publisher_ != nullptr) {
     std_msgs::msg::UInt8MultiArray msg{};
-    msg.data = frame_to_debug_payload(frame);
+    msg.data = payload;
     command_debug_publisher_->publish(msg);
+  }
+  if (stamped_command_debug_publisher_ != nullptr) {
+    std_msgs_stamped::msg::StampedUInt8MultiArray msg{};
+    msg.header.stamp = stamp;
+    msg.header.frame_id.clear();
+    msg.layout = std_msgs::msg::MultiArrayLayout{};
+    msg.data = payload;
+    stamped_command_debug_publisher_->publish(msg);
   }
 }
 
@@ -424,6 +441,13 @@ void PikaGripperHardware::publish_sent_position_value(double position)
     msg.data = position;
     sent_position_publisher_->publish(msg);
   }
+  if (stamped_sent_position_publisher_ != nullptr) {
+    std_msgs_stamped::msg::StampedFloat64 msg{};
+    msg.header.stamp = clock_->now();
+    msg.header.frame_id.clear();
+    msg.data = position;
+    stamped_sent_position_publisher_->publish(msg);
+  }
 }
 
 void PikaGripperHardware::publish_feedback_position_frame(const can_frame& frame)
@@ -431,10 +455,20 @@ void PikaGripperHardware::publish_feedback_position_frame(const can_frame& frame
   if (!publish_feedback_position_) {
     return;
   }
+  const auto payload = frame_to_debug_payload(frame);
+  const auto stamp = clock_->now();
   if (feedback_position_publisher_ != nullptr) {
     std_msgs::msg::UInt8MultiArray msg{};
-    msg.data = frame_to_debug_payload(frame);
+    msg.data = payload;
     feedback_position_publisher_->publish(msg);
+  }
+  if (stamped_feedback_position_publisher_ != nullptr) {
+    std_msgs_stamped::msg::StampedUInt8MultiArray msg{};
+    msg.header.stamp = stamp;
+    msg.header.frame_id.clear();
+    msg.layout = std_msgs::msg::MultiArrayLayout{};
+    msg.data = payload;
+    stamped_feedback_position_publisher_->publish(msg);
   }
 }
 

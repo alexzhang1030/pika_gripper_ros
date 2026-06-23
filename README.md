@@ -117,8 +117,11 @@ Examples:
 - Exposes feedback: position, effort (force in N), status_code, enabled, homed, fault.
 - Optional debug topics:
   - `~/gripper_command_debug` (UInt8MultiArray)
+  - `~/gripper_command_debug_stamped` (StampedUInt8MultiArray)
   - `~/gripper_sent_position_debug` (Float64)
+  - `~/gripper_sent_position_debug_stamped` (StampedFloat64)
   - `~/gripper_feedback_debug` (UInt8MultiArray)
+  - `~/gripper_feedback_debug_stamped` (StampedUInt8MultiArray)
 
 ## Notes and caveats
 
@@ -138,6 +141,5 @@ Examples:
 
 This package is derived from `piper_gripper_hardware` but adapted for the Pika gripper:
 - **Protocol**: Same CAN IDs (0x159/0x2A8), same byte layout. Pika adds byte 7 `mode` (width/angle) in feedback.
-- **No `std_msgs_stamped` dependency**: Debug topics use plain `std_msgs` types only, removing the external dependency.
 - **`force_mn` replaces `effort_mn`**: The Pika protocol uses "force" in mN rather than "effort" in mN·m.
 - **Angle mode support**: Status codes 0x04-0x07 and feedback byte 7 expose the angle mode.

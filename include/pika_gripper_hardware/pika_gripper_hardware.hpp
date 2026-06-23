@@ -28,6 +28,8 @@
 #include "rclcpp_lifecycle/state.hpp"
 #include "std_msgs/msg/float64.hpp"
 #include "std_msgs/msg/u_int8_multi_array.hpp"
+#include "std_msgs_stamped/msg/stamped_float64.hpp"
+#include "std_msgs_stamped/msg/stamped_u_int8_multi_array.hpp"
 
 #include "pika_gripper_hardware/can_socket.hpp"
 #include "pika_gripper_hardware/pika_gripper_protocol.hpp"
@@ -103,8 +105,11 @@ private:
   std::string debug_topic_prefix_;
 
   rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr command_debug_publisher_;
+  rclcpp::Publisher<std_msgs_stamped::msg::StampedUInt8MultiArray>::SharedPtr stamped_command_debug_publisher_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr sent_position_publisher_;
+  rclcpp::Publisher<std_msgs_stamped::msg::StampedFloat64>::SharedPtr stamped_sent_position_publisher_;
   rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr feedback_position_publisher_;
+  rclcpp::Publisher<std_msgs_stamped::msg::StampedUInt8MultiArray>::SharedPtr stamped_feedback_position_publisher_;
 
   std::mutex can_send_mutex_;
   std::atomic<std::uint64_t> last_feedback_time_ms_{0};
