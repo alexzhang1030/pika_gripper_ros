@@ -15,6 +15,7 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_msgs_stamped REQUIRED)
 
 add_library(
   ${PROJECT_NAME}
@@ -36,6 +37,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_lifecycle
   std_msgs
+  std_msgs_stamped
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
@@ -73,7 +75,7 @@ install(
 
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
-ament_export_dependencies(hardware_interface pluginlib rclcpp rclcpp_lifecycle std_msgs)
+ament_export_dependencies(hardware_interface pluginlib rclcpp rclcpp_lifecycle std_msgs std_msgs_stamped)
 ament_export_targets(export_${PROJECT_NAME})
 
 ament_package()
