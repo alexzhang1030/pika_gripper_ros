@@ -90,6 +90,8 @@ private:
   std::string can_interface_{"can0"};
   canid_t command_can_id_{protocol::kGripperCommandCanId};
   canid_t feedback_can_id_{protocol::kGripperFeedbackCanId};
+  // Extra feedback CAN IDs the gripper may use when disabled (e.g. 0x517, 0x527)
+  std::vector<canid_t> extra_feedback_can_ids_{};
   double min_position_m_{0.0};
   double max_position_m_{0.08};
   double initial_position_m_{0.0};

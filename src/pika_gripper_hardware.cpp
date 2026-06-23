@@ -11,6 +11,7 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/qos.hpp>
 #include <rclcpp/utilities.hpp>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -85,6 +86,32 @@ auto PikaGripperHardware::on_init(const hardware_interface::HardwareInfo& info) 
   can_interface_ = get_parameter_or("can_interface", can_interface_);
   command_can_id_ = static_cast<canid_t>(get_parameter_or("command_can_id", static_cast<int>(command_can_id_)));
   feedback_can_id_ = static_cast<canid_t>(get_parameter_or("feedback_can_id", static_cast<int>(feedback_can_id_)));
+
+  // Parse extra feedback CAN IDs (e.g. "0x517,0x527" for disabled-state messages)
+  {
+    const auto extra_ids_str = get_parameter_or("extra_feedback_can_ids", std::string{});
+    if (!extra_ids_str.empty()) {
+      std::stringstream ss(extra_ids_str);
+      std::string token;
+      while (std::getline(ss, token, ',')) {
+        // Trim leading/trailing whitespace
+        const auto start = token.find_first_not_of(" \t");
+        const auto end = token.find_last_not_of(" \t");
+        if (start == std::string::npos) {
+          continue;
+        }
+        token = token.substr(start, end - start + 1);
+        try {
+          extra_feedback_can_ids_.push_back(static_cast<canid_t>(std::stoul(token, nullptr, 0)));
+        } catch (const std::exception&) {
+          RCLCPP_WARN(logger(), "Ignoring invalid extra_feedback_can_ids entry: '%s'", token.c_str());
+        }
+      }
+    } else {
+      // Default when not configured: accept 0x517 and 0x527 (disabled-state feedback)
+      extra_feedback_can_ids_ = {static_cast<canid_t>(0x517), static_cast<canid_t>(0x527)};
+    }
+  }
   min_position_m_ = get_parameter_or("min_position_m", min_position_m_);
   max_position_m_ = get_parameter_or("max_position_m", max_position_m_);
   initial_position_m_ = get_parameter_or("initial_position_m", initial_position_m_);
@@ -128,9 +155,17 @@ auto PikaGripperHardware::on_init(const hardware_interface::HardwareInfo& info) 
   }
 
   clock_ = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+
+  // Build a display string for all valid feedback IDs
+  std::stringstream fb_ids_display;
+  fb_ids_display << "0x" << std::hex << std::uppercase << feedback_can_id_;
+  for (const auto id : extra_feedback_can_ids_) {
+    fb_ids_display << ", 0x" << std::hex << std::uppercase << id;
+  }
+
   RCLCPP_INFO(logger(),
-              "on_init: interface=%s cmd_id=0x%X fb_id=0x%X range=[%.4f, %.4f] initial=%.4f force_mn=%d",
-              can_interface_.c_str(), command_can_id_, feedback_can_id_, min_position_m_, max_position_m_,
+              "on_init: interface=%s cmd_id=0x%X fb_ids=[%s] range=[%.4f, %.4f] initial=%.4f force_mn=%d",
+              can_interface_.c_str(), command_can_id_, fb_ids_display.str().c_str(), min_position_m_, max_position_m_,
               initial_position_m_, default_force_mn_);
   return CallbackReturn::SUCCESS;
 }
@@ -318,7 +353,21 @@ void PikaGripperHardware::receive_loop()
       continue;
     }
 
-    const auto feedback = protocol::parse_feedback_frame(frame, feedback_can_id_);
+    const auto raw_id = frame.can_id & CAN_EFF_MASK;
+    bool valid_id = (raw_id == feedback_can_id_);
+    if (!valid_id) {
+      for (const auto id : extra_feedback_can_ids_) {
+        if (raw_id == id) {
+          valid_id = true;
+          break;
+        }
+      }
+    }
+    if (!valid_id) {
+      continue;
+    }
+
+    const auto feedback = protocol::parse_feedback_frame(frame);
     if (!feedback.has_value()) {
       continue;
     }

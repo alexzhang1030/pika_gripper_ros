@@ -11,8 +11,12 @@ namespace pika_gripper_hardware::protocol
 
 // 0x159: host -> gripper command
 constexpr canid_t kGripperCommandCanId = 0x159;
-// 0x2A8: gripper -> host feedback
+// 0x2A8: gripper -> host feedback (when enabled / active)
 constexpr canid_t kGripperFeedbackCanId = 0x2A8;
+// 0x517, 0x527: gripper -> host feedback (when disabled / not enabled)
+// The Pika gripper streams on these IDs before the driver is activated.
+constexpr canid_t kGripperFeedbackCanIdAlt1 = 0x517;
+constexpr canid_t kGripperFeedbackCanIdAlt2 = 0x527;
 
 enum class GripperMode : std::uint8_t
 {
@@ -45,7 +49,7 @@ struct Feedback
 };
 
 auto make_command_frame(canid_t can_id, const Command& command) -> can_frame;
-auto parse_feedback_frame(const can_frame& frame, canid_t expected_can_id) -> std::optional<Feedback>;
+auto parse_feedback_frame(const can_frame& frame) -> std::optional<Feedback>;
 
 }  // namespace pika_gripper_hardware::protocol
 
