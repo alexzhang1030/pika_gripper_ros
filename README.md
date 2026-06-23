@@ -8,6 +8,7 @@ Based on the AgileX `pyAgxArm` protocol (`ArmMsgGripperCtrl` / `ArmMsgFeedbackGr
 
 - **Command CAN ID**: `0x159` (`ARM_GRIPPER_CTRL`)
 - **Feedback CAN ID**: `0x2A8` (`ARM_GRIPPER_FEEDBACK`)
+- **Extra Feedback CAN IDs**: `0x517`, `0x527` — the Pika gripper may stream on these IDs when disabled (not yet activated). The plugin accepts feedback on all configured IDs.
 - Frame layout uses **big-endian** encoding:
   - **Command** (8 bytes): `int32 position(µm)` | `uint16 force(mN)` | `uint8 status_code` | `uint8 set_zero`
   - **Feedback** (8 bytes): `int32 position(µm)` | `int16 force(mN)` | `uint8 status_code` | `uint8 mode(0x00=width, 0x01=angle)`
@@ -85,6 +86,7 @@ Examples:
     <param name="can_interface">can0</param>
     <param name="command_can_id">345</param> <!-- 0x159 -->
     <param name="feedback_can_id">680</param> <!-- 0x2A8 -->
+    <param name="extra_feedback_can_ids">0x517, 0x527</param> <!-- disabled-state feedback IDs -->
     <param name="min_position_m">0.0</param>
     <param name="max_position_m">0.08</param>
     <param name="initial_position_m">0.0</param>
@@ -126,9 +128,10 @@ Examples:
 ## Notes and caveats
 
 - In most single-arm setups, only `can_interface` changes (`can0`, `can1`, ...).
-- `command_can_id` / `feedback_can_id` are usually fixed defaults:
+- `command_can_id` / `feedback_can_id` / `extra_feedback_can_ids` are usually fixed defaults:
   - `command_can_id = 0x159`
   - `feedback_can_id = 0x2A8`
+  - `extra_feedback_can_ids = 0x517, 0x527` (default when unset; the Pika streams on these IDs when the driver is not yet enabled)
 - If the arm was configured with master/slave offset command `0x470`, CAN IDs can shift:
   - Control base can shift `15x -> 16x/17x` (gripper command may become `0x169/0x179`)
   - Feedback base can shift `2Ax -> 2Bx/2Cx` (gripper feedback may become `0x2B8/0x2C8`)

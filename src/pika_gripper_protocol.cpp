@@ -63,9 +63,9 @@ auto make_command_frame(canid_t can_id, const Command& command) -> can_frame
   return frame;
 }
 
-auto parse_feedback_frame(const can_frame& frame, canid_t expected_can_id) -> std::optional<Feedback>
+auto parse_feedback_frame(const can_frame& frame) -> std::optional<Feedback>
 {
-  if ((frame.can_id & CAN_EFF_MASK) != expected_can_id || frame.can_dlc < 7) {
+  if (frame.can_dlc < 7) {
     return std::nullopt;
   }
 
