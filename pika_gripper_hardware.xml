@@ -1,0 +1,8 @@
+<library path="pika_gripper_hardware">
+  <class
+    name="pika_gripper_hardware/PikaGripperHardware"
+    type="pika_gripper_hardware::PikaGripperHardware"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>Pika gripper ros2_control hardware interface over raw CAN.</description>
+  </class>
+</library>
