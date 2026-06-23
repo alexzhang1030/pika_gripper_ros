@@ -65,7 +65,7 @@ auto make_command_frame(canid_t can_id, const Command& command) -> can_frame
 
 auto parse_feedback_frame(const can_frame& frame, canid_t expected_can_id) -> std::optional<Feedback>
 {
-  if ((frame.can_id & CAN_EFF_MASK) != expected_can_id || frame.can_dlc < 8) {
+  if ((frame.can_id & CAN_EFF_MASK) != expected_can_id || frame.can_dlc < 7) {
     return std::nullopt;
   }
 
@@ -76,6 +76,7 @@ auto parse_feedback_frame(const can_frame& frame, canid_t expected_can_id) -> st
   feedback.force_n = static_cast<double>(gripper_force) / 1'000.0;
   feedback.status_code = frame.data[6];
   // Byte 7: mode (0x00 = width, 0x01 = angle)
+  // When DLC=7 (hardware omits byte 7), data[7] defaults to 0 → width mode
   feedback.mode = (frame.data[7] == 0x01) ? GripperMode::kAngle : GripperMode::kWidth;
 
   // Status bits (identical to Piper/AGX gripper protocol)
